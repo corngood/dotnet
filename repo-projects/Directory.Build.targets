@@ -106,6 +106,7 @@
     <ReplaceTextInFile InputFile="$(DirectoryBuildPropsFile)"
       OldText="$(OldText)"
       NewText="$(NewText)" />
+    <WriteLinesToFile File="$(RepoCompletedSemaphorePath)AddNoWarns.complete" Overwrite="true" />
   </Target>
 
   <Target Name="UpdateBuildToolFramework"
