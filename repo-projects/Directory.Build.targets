@@ -26,6 +26,30 @@
     <MSBuild Projects="@(_DependentProject)" Targets="Build" BuildInParallel="$(BuildInParallel)" StopOnFirstFailure="true" />
   </Target>
 
+  <Target Name="AddNixTargets"
+          BeforeTargets="Build"
+          Condition=" EXISTS('$(ProjectDirectory)Directory.Build.targets') OR EXISTS('$(ProjectDirectory)src/Directory.Build.targets') "
+          Inputs="$(MSBuildProjectFullPath)"
+          Outputs="$(RepoCompletedSemaphorePath)AddNixTargets.complete" >
+    <PropertyGroup>
+      <OldText><![CDATA[</Project>]]></OldText>
+      <NewText>
+        <![CDATA[  <Target Name="PatchNupkgs" AfterTargets="Restore" BeforeTargets="Build">
+    <Message Importance="High" Text="patch-nupkgs %24(NUGET_PACKAGES) "/>
+    <Exec Command="patch-nupkgs %24(NUGET_PACKAGES) "/>
+  </Target>
+</Project>]]>
+      </NewText>
+
+      <DirectoryBuildTargetsFile Condition=" EXISTS('$(ProjectDirectory)Directory.Build.targets') ">$(ProjectDirectory)Directory.Build.targets</DirectoryBuildTargetsFile>
+      <DirectoryBuildTargetsFile Condition=" '$(DirectoryBuildTargetsFile)' == '' AND EXISTS('$(ProjectDirectory)src/Directory.Build.targets') ">$(ProjectDirectory)src/Directory.Build.targets</DirectoryBuildTargetsFile>
+    </PropertyGroup>
+    <ReplaceTextInFile InputFile="$(DirectoryBuildTargetsFile)"
+      OldText="$(OldText)"
+      NewText="$(NewText)" />
+    <WriteLinesToFile File="$(RepoCompletedSemaphorePath)AddNixTargets.complete" Overwrite="true" />
+  </Target>
+
   <Target Name="AddNoWarns"
           BeforeTargets="Build"
           Condition=" EXISTS('$(ProjectDirectory)Directory.Build.props') OR EXISTS('$(ProjectDirectory)src/Directory.Build.props') "
