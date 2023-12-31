@@ -26,6 +26,32 @@
     <MSBuild Projects="@(_DependentProject)" Targets="Build" BuildInParallel="$(BuildInParallel)" StopOnFirstFailure="true" />
   </Target>
 
+  <Target Name="AddNixSourceBuildProps"
+          BeforeTargets="Build"
+          Condition=" EXISTS('$(ProjectDirectory)eng/SourceBuild.props') "
+          Inputs="$(MSBuildProjectFullPath)"
+          Outputs="$(RepoCompletedSemaphorePath)AddNixSourceBuildProps.complete" >
+    <PropertyGroup>
+      <OldText><![CDATA[</Project>]]></OldText>
+      <NewText>
+        <![CDATA[  <Target Name="NuGetToNix"
+    BeforeTargets="AfterSourceBuild"
+    Condition="'%24(ArcadeInnerBuildFromSource)' != 'true' AND EXISTS('%24(CurrentRepoSourceBuildPackageCache)')">
+    <Message Importance="High"
+      Text="%24(CurrentRepoSourceBuildSourceDir): nuget-to-nix '%24(CurrentRepoSourceBuildPackageCache)' > '%24(SourceBuildSelfDir)deps.nix'" />
+    <Exec
+      Command="nuget-to-nix '%24(CurrentRepoSourceBuildPackageCache)' > '%24(SourceBuildSelfDir)deps.nix'"
+      WorkingDirectory="%24(CurrentRepoSourceBuildSourceDir)" />
+  </Target>
+</Project>]]>
+      </NewText>
+    </PropertyGroup>
+    <ReplaceTextInFile InputFile="$(ProjectDirectory)eng/SourceBuild.props"
+      OldText="$(OldText)"
+      NewText="$(NewText)" />
+    <WriteLinesToFile File="$(RepoCompletedSemaphorePath)AddNixSourceBuildProps.complete" Overwrite="true" />
+  </Target>
+
   <Target Name="AddNixTargets"
           BeforeTargets="Build"
           Condition=" EXISTS('$(ProjectDirectory)Directory.Build.targets') OR EXISTS('$(ProjectDirectory)src/Directory.Build.targets') "
@@ -471,6 +497,7 @@
     <ItemGroup>
       <LogFilesToCopy Include="$(ProjectDirectory)artifacts/**/*.log" />
       <LogFilesToCopy Include="$(ProjectDirectory)artifacts/**/*.binlog" />
+      <LogFilesToCopy Include="$(ProjectDirectory)artifacts/**/deps.nix" />
       <ObjFilesToCopy Include="$(ProjectDirectory)artifacts/**/project.assets.json" />
     </ItemGroup>
     <MakeDir Directories="$(BuildLogsDir)" Condition="Exists('$(ProjectDirectory)artifacts')"/>

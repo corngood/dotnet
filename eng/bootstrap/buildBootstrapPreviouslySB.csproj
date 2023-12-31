@@ -102,6 +102,12 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="NuGetToNix" AfterTargets="Restore">
+    <Exec
+        Command="nuget-to-nix $(RestorePackagesPath) > $(ArchiveDir)deps.nix"
+        WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
   <Target Name="BuildBoostrapPreviouslySourceBuilt"
           AfterTargets="Restore"
           DependsOnTargets="GetPackagesToDownload">
